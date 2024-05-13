@@ -1,0 +1,72 @@
+﻿
+@page "/"
+@attribute [Authorize]
+
+@using Chinook.ClientModels
+@using Chinook.Interface
+@using Chinook.Models
+@using Microsoft.EntityFrameworkCore
+@inject IHomeService homeService
+<PageTitle>Index</PageTitle>
+
+<h1>Artists</h1>
+
+@if (artists == null)
+{
+    <Loading />
+}
+else
+{
+    <!-- MyComponent.razor -->
+    <input type="text" @bind="searchTerm" @oninput="OnSearchInput" placeholder="Search...">
+
+    <table class="table table-striped table-hover table-sm">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Number of albums</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var artist in artists)
+            {
+                <tr>
+                    <td><a href="Artist/@artist.ArtistId">@artist.Name</a></td>
+                    <td>@artist.AlbumsCount</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ArtistDTO> artists;
+    private string searchTerm;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await InvokeAsync(StateHasChanged);
+        artists = await GetArtists();
+    }
+
+    public async Task<List<ArtistDTO>> GetArtists()
+    {
+        return await homeService.GetArtists();
+    }
+
+    public async Task<List<AlbumDTO>> GetAlbumsForArtist(int artistId)
+    {
+        return await homeService.GetAlbumsForArtist(artistId);
+    }
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        searchTerm = e.Value.ToString();
+        await GetArtistsBySearch(searchTerm);
+    }
+
+    public async Task GetArtistsBySearch(string searchTerm)
+    {
+        artists = await homeService.GetArtistsBySearch(searchTerm);
+    }
+}
